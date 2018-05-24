@@ -115,18 +115,18 @@ int32_t GetStepPointBase(int32_t s32PointFlag,
 		}
 
 
-		printf("dis: % 8.2f, [%d] union foot (x: % 8.2f, y: % 8.2f), ", f32Distance, i,
-			stFootOut[i].x, stFootOut[i].y);
+// 		printf("dis: % 8.2f, [%d] union foot (x: % 8.2f, y: % 8.2f), ", f32Distance, i,
+// 			stFootOut[i].x, stFootOut[i].y);
 
-		Vector2DSub(stFootOut + i, c_stHexBase + i, stFootOut + i);
-		Vector2DSub(stFootOut + i, &stRO, stFootOut + i);
-		Vector2DRotate(stFootOut + i, -c_f32HexBaseRadian[i], stFootOut + i);
-		if (i <= _Base_Point_LeftDown)
-		{
-			//Vector2DRotate(stFootOut + i, M_PI, stFootOut + i);
-		}
+		//Vector2DSub(stFootOut + i, c_stHexBase + i, stFootOut + i);
+		//Vector2DSub(stFootOut + i, &stRO, stFootOut + i);
+		//Vector2DRotate(stFootOut + i, -c_f32HexBaseRadian[i], stFootOut + i);
+		//if (i <= _Base_Point_LeftDown)
+		//{
+		//	Vector2DRotate(stFootOut + i, M_PI, stFootOut + i);
+		//}
 
-		printf("real foot (x: % 8.2f, y: % 8.2f)\n",stFootOut[i].x, stFootOut[i].y);
+// 		printf("real foot (x: % 8.2f, y: % 8.2f)\n",stFootOut[i].x, stFootOut[i].y);
 
 	}
 
@@ -137,19 +137,118 @@ int32_t GetStepPointBase(int32_t s32PointFlag,
 int main()
 {
 	St2DVector stFoot[_Base_Point_Reserved];
-	int32_t j;
-	for (j = 0; j < _Base_Point_Reserved; j++)
 	{
-		float f32Dis = 60.0f;
-		while (f32Dis > -60.001f)
+		float f32MaxDis = 60.0f;
+		float f32StepDis = 5.0f;
+		float f32ProcessInit[4] =
 		{
-			GetStepPointBase(1 << j, _Base_Point_Right,
-				-150000.0f, f32Dis, 87.75f, stFoot);
-			f32Dis = f32Dis - 5.0f;
-		}
-		printf("\n\n\n");
-	}
+			-1.0f * f32StepDis,
+			-(f32MaxDis / f32StepDis - 1.0f) * f32StepDis,
+			1.0f * f32StepDis,
+			(f32MaxDis / f32StepDis - 1.0f) * f32StepDis,
+		};
+		bool boStepDirection[4] =
+		{
+			false, true, true, false,
+		};
+		bool boIsAdvace = false;
+		int32_t s32StepCounts = (int32_t)(f32MaxDis / f32StepDis);
+		int32_t s32Process = -1;
+		int32_t s32CurStep = -1;
 
+		float f32Dis;
+		bool boDir;
+		while (true)
+		{
+
+			if (((s32Process == 0 || s32Process == 2) && (s32CurStep == s32StepCounts))
+				|| (s32Process < 0 || s32Process > 4))
+			{
+				/* update the commond(direction and radius) */
+				printf("input the commond:\n");
+				int32_t c = getchar();
+				getchar();
+				if (c == 'f')
+				{
+					boIsAdvace = true;
+				}
+				else if (c == 'b')
+				{
+					boIsAdvace = false;
+				}
+				else if (c != 'c')
+				{
+					s32Process = -1;
+					continue;
+				}
+				if (c != 'c')
+				{
+					s32Process = 0;
+					s32CurStep = s32StepCounts;
+					f32Dis = f32ProcessInit[s32Process];
+					boDir = boStepDirection[s32Process];
+
+					if (!boIsAdvace)
+					{
+						f32Dis = -f32Dis;
+						boDir = !boDir;
+					}
+				}
+			}
+
+			if (s32CurStep <= 0)
+			{
+				s32Process++;
+				if (s32Process >= 4)
+				{
+					s32Process = 0;
+				}
+
+				s32CurStep = s32StepCounts;
+				f32Dis = f32ProcessInit[s32Process];
+				boDir = boStepDirection[s32Process];
+
+				if (!boIsAdvace)
+				{
+					f32Dis = -f32Dis;
+					boDir = !boDir;
+				}
+
+				printf("\n\n\n");
+				continue;/* check the command again */
+			}
+
+			s32CurStep--;
+			GetStepPointBase(Base_Point_LeftUp_Flag |
+				Base_Point_Right_Flag |
+				Base_Point_LeftDown_Flag,
+				_Base_Point_Right,
+				-150000.0f, f32Dis, 87.75f, stFoot);
+
+			GetStepPointBase(Base_Point_RightUp_Flag |
+				Base_Point_Left_Flag |
+				Base_Point_RightDown_Flag,
+				_Base_Point_Right,
+				-150000.0f, -f32Dis, 87.75f, stFoot);
+			if (boDir)
+			{
+				f32Dis = f32Dis + f32StepDis;
+			}
+			else
+			{
+				f32Dis = f32Dis - f32StepDis;
+			}
+			{
+				int32_t m;
+				for (m = 0; m < _Base_Point_Reserved; m++)
+				{
+					printf("(% 8.2f, % 8.2f), ",
+						stFoot[m].x, stFoot[m].y);
+				}
+				printf("\n");
+			}
+		}
+	}
 	getchar();
 	return 0;
 }
